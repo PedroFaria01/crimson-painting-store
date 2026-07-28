@@ -1,0 +1,35 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    margin: 0;
+    background: oklch(0.14 0.02 30);
+  }
+
+  ::selection {
+    background: oklch(0.42 0.17 20);
+    color: oklch(0.95 0.01 80);
+  }
+
+  a {
+    color: inherit;
+  }
+
+  input,
+  select,
+  textarea {
+    font-family: 'EB Garamond', serif;
+  }
+
+  input::placeholder {
+    font-style: italic;
+  }
+}

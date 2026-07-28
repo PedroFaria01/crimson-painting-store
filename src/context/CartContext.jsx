@@ -1,0 +1,106 @@
+import { createContext, useContext, useEffect, useMemo, useState } from 'react'
+import { PRODUCTS, formatEUR, getProductById } from '../data/products'
+
+const CartContext = createContext(null)
+const STORAGE_KEY = 'crimson-painting-cart'
+
+function readInitialCart() {
+  if (typeof window === 'undefined') return []
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY)
+    const parsed = raw ? JSON.parse(raw) : []
+    return Array.isArray(parsed) ? parsed : []
+  } catch {
+    return []
+  }
+}
+
+export function CartProvider({ children }) {
+  const [cart, setCart] = useState(readInitialCart)
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(cart))
+    } catch {
+      // localStorage unavailable (e.g. private browsing) — fail silently
+    }
+  }, [cart])
+
+  function addToCart(productId, qty = 1) {
+    setCart((prev) => {
+      const existing = prev.find((c) => c.productId === productId)
+      if (existing) {
+        return prev.map((c) =>
+          c.productId === productId ? { ...c, qty: c.qty + qty } : c
+        )
+      }
+      return [...prev, { productId, qty }]
+    })
+  }
+
+  function changeQty(productId, delta) {
+    setCart((prev) =>
+      prev
+        .map((c) => (c.productId === productId ? { ...c, qty: c.qty + delta } : c))
+        .filter((c) => c.qty > 0)
+    )
+  }
+
+  function removeFromCart(productId) {
+    setCart((prev) => prev.filter((c) => c.productId !== productId))
+  }
+
+  function clearCart() {
+    setCart([])
+  }
+
+  const cartItems = useMemo(
+    () =>
+      cart
+        .map((c) => {
+          const product = getProductById(c.productId)
+          if (!product) return null
+          return { ...c, product }
+        })
+        .filter(Boolean),
+    [cart]
+  )
+
+  const cartCount = useMemo(() => cart.reduce((sum, c) => sum + c.qty, 0), [cart])
+
+  const subtotal = useMemo(
+    () =>
+      cartItems.reduce((sum, item) => sum + item.product.priceNum * item.qty, 0),
+    [cartItems]
+  )
+
+  const shipping = subtotal === 0 ? 0 : subtotal >= 50 ? 0 : 5
+  const total = subtotal + shipping
+
+  const value = {
+    cart,
+    cartItems,
+    cartCount,
+    subtotal,
+    shipping,
+    total,
+    subtotalDisplay: formatEUR(subtotal),
+    shippingDisplay: shipping === 0 ? 'Free' : formatEUR(shipping),
+    totalDisplay: formatEUR(total),
+    addToCart,
+    changeQty,
+    removeFromCart,
+    clearCart,
+  }
+
+  return <CartContext.Provider value={value}>{children}</CartContext.Provider>
+}
+
+export function useCart() {
+  const ctx = useContext(CartContext)
+  if (!ctx) throw new Error('useCart must be used within a CartProvider')
+  return ctx
+}
+
+// Re-exported for convenience where product lookups are needed alongside cart state
+export { PRODUCTS }
