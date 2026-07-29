@@ -1,5 +1,7 @@
 # Crimson Painting — Store (React + Tailwind)
 
+https://pedrofaria01.github.io/crimson-painting-store/
+
 A fictional D&D-themed miniatures e-commerce prototype, built as a portfolio
 project. React recreation of a design prototype, following its design tokens,
 copy, and the "Style C" hero layout.
