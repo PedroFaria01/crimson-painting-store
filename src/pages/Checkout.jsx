@@ -1,70 +1,57 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import Button from '../components/Button'
+import { useAuth } from '../context/AuthContext'
 import { useCart } from '../context/CartContext'
-
-const PAYMENT_METHODS = [
-  { key: 'card', label: 'Card' },
-  { key: 'banktransfer', label: 'Bank Transfer' },
-]
+import { startCheckout } from '../services/orders'
 
 const EMPTY_FORM = { name: '', email: '', address: '', city: '', postalCode: '' }
 
+function buildRedirectUrl(path) {
+  return `${window.location.origin}${import.meta.env.BASE_URL}${path}`
+}
+
 export default function Checkout() {
-  const { cartItems, subtotalDisplay, shippingDisplay, totalDisplay, clearCart } =
-    useCart()
-  const [form, setForm] = useState(EMPTY_FORM)
-  const [payment, setPayment] = useState('card')
-  const [orderConfirmed, setOrderConfirmed] = useState(false)
-  const [orderNumber, setOrderNumber] = useState('')
+  const { user } = useAuth()
+  const { cartItems, cart, subtotalDisplay, shippingDisplay, totalDisplay } = useCart()
+  const [form, setForm] = useState(() =>
+    user?.email ? { ...EMPTY_FORM, email: user.email } : EMPTY_FORM
+  )
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState(null)
 
   function updateField(field, value) {
     setForm((f) => ({ ...f, [field]: value }))
   }
 
-  function placeOrder(e) {
+  async function placeOrder(e) {
     e.preventDefault()
-    // NOTE: order number should be issued by the backend in production —
-    // this random value is a placeholder to mirror the prototype's confirmation screen.
-    const num = '#CP-' + Math.floor(10000 + Math.random() * 90000)
-    setOrderNumber(num)
-    setOrderConfirmed(true)
-    clearCart()
+    setError(null)
+    setSubmitting(true)
+    try {
+      const { url, orderNumber } = await startCheckout({
+        items: cart.map((c) => ({ productId: c.productId, quantity: c.qty })),
+        customer: form,
+        successUrl: buildRedirectUrl('checkout/success?session_id={CHECKOUT_SESSION_ID}'),
+        cancelUrl: buildRedirectUrl('checkout/cancel'),
+      })
+      // Stashed so the success page can greet the customer by order number
+      // without needing a public read policy on the orders table.
+      window.sessionStorage.setItem('cp-last-order-number', orderNumber)
+      window.location.href = url
+    } catch (err) {
+      setError(err.message || 'Could not start checkout. Please try again.')
+      setSubmitting(false)
+    }
   }
 
-  if (cartItems.length === 0 && !orderConfirmed) {
+  if (cartItems.length === 0) {
     return (
       <div className="max-w-[1000px] mx-auto px-10 pt-12 pb-[90px] text-center animate-cp-fade">
         <p className="text-cp-muted mb-6">Your cart is empty.</p>
         <Button as={Link} to="/catalog" variant="solid">
           View Catalog
         </Button>
-      </div>
-    )
-  }
-
-  if (orderConfirmed) {
-    return (
-      <div className="max-w-[1000px] mx-auto px-10 pt-12 pb-[90px] w-full box-border animate-cp-fade">
-        <div className="text-center py-[70px]">
-          <div className="font-cinzel text-[13px] tracking-[3px] text-cp-gold uppercase mb-5">
-            Order Confirmed
-          </div>
-          <h1 className="font-cinzel font-bold text-4xl mb-[18px] text-cp-cream-bright">
-            Your order has departed for the forge
-          </h1>
-          <p className="text-[17px] text-cp-muted mb-2.5">
-            Order {orderNumber} received. We'll send updates by email.
-          </p>
-          <Button
-            as={Link}
-            to="/"
-            variant="solid"
-            className="mt-6 inline-block"
-          >
-            Back to Home
-          </Button>
-        </div>
       </div>
     )
   }
@@ -121,25 +108,11 @@ export default function Checkout() {
           <div className="font-cinzel text-sm tracking-wide uppercase text-cp-cream mt-4">
             Payment
           </div>
-          <div className="flex gap-3">
-            {PAYMENT_METHODS.map((m) => {
-              const active = m.key === payment
-              return (
-                <button
-                  key={m.key}
-                  type="button"
-                  onClick={() => setPayment(m.key)}
-                  className={`flex-1 px-3 py-3 rounded font-garamond text-sm cursor-pointer transition-colors ${
-                    active
-                      ? 'bg-cp-crimson text-cp-cream-bright border border-cp-crimson-bright'
-                      : 'bg-transparent text-cp-muted border border-cp-border hover:border-cp-gold-dim'
-                  }`}
-                >
-                  {m.label}
-                </button>
-              )
-            })}
-          </div>
+          <p className="text-sm text-cp-muted-2">
+            You'll enter your card details securely on the next screen.
+          </p>
+
+          {error && <div className="text-sm text-cp-crimson-bright">{error}</div>}
         </div>
 
         <div className="bg-cp-surface border border-cp-border rounded-md p-[26px]">
@@ -158,8 +131,8 @@ export default function Checkout() {
             <span>Total</span>
             <span>{totalDisplay}</span>
           </div>
-          <Button type="submit" variant="solid" className="w-full">
-            Confirm Order
+          <Button type="submit" variant="solid" className="w-full" disabled={submitting}>
+            {submitting ? 'Redirecting to payment…' : 'Continue to Payment'}
           </Button>
         </div>
       </form>

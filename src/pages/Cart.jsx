@@ -2,7 +2,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import PlaceholderImage from '../components/PlaceholderImage'
 import Button from '../components/Button'
 import { useCart } from '../context/CartContext'
-import { formatEUR } from '../data/products'
+import { formatEUR } from '../lib/format'
 
 export default function Cart() {
   const navigate = useNavigate()

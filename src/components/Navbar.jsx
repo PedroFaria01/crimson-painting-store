@@ -1,8 +1,10 @@
 import { Link } from 'react-router-dom'
 import { useCart } from '../context/CartContext'
+import { useAuth } from '../context/AuthContext'
 
 export default function Navbar() {
   const { cartCount } = useCart()
+  const { user } = useAuth()
 
   return (
     <nav className="sticky top-0 z-50 flex items-center justify-between gap-6 px-10 py-3.5 bg-cp-bg-nav backdrop-blur-[10px] border-b border-cp-border">
@@ -32,6 +34,12 @@ export default function Navbar() {
           className="text-cp-cream-dim hover:text-cp-gold transition-colors"
         >
           Custom Order
+        </Link>
+        <Link
+          to={user ? '/account' : '/login'}
+          className="text-cp-cream-dim hover:text-cp-gold transition-colors"
+        >
+          {user ? 'My Account' : 'Login'}
         </Link>
         <Link to="/cart" className="relative cursor-pointer">
           <span className="text-cp-cream-dim hover:text-cp-gold transition-colors">

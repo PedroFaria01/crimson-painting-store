@@ -1,27 +1,26 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import ProductCard from '../components/ProductCard'
-import { CATEGORIES, PRODUCTS } from '../data/products'
+import { useProducts } from '../context/ProductsContext'
 
 export default function Catalog() {
+  const { products, categories, loading, error } = useProducts()
   const [searchParams] = useSearchParams()
   const initialCategory = searchParams.get('category') || 'all'
-  const [activeCategory, setActiveCategory] = useState(
-    CATEGORIES.some((c) => c.key === initialCategory) ? initialCategory : 'all'
-  )
+  const [activeCategory, setActiveCategory] = useState(initialCategory)
 
   // Keep in sync if the user arrives via a fresh link (e.g. "Custom Order" nav item)
   useEffect(() => {
     const fromUrl = searchParams.get('category')
-    if (fromUrl && CATEGORIES.some((c) => c.key === fromUrl)) {
+    if (fromUrl && categories.some((c) => c.key === fromUrl)) {
       setActiveCategory(fromUrl)
     }
-  }, [searchParams])
+  }, [searchParams, categories])
 
   const filteredProducts =
     activeCategory === 'all'
-      ? PRODUCTS
-      : PRODUCTS.filter((p) => p.category === activeCategory)
+      ? products
+      : products.filter((p) => p.category === activeCategory)
 
   return (
     <div className="max-w-[1200px] mx-auto px-10 pt-12 pb-[90px] w-full box-border animate-cp-fade">
@@ -30,7 +29,7 @@ export default function Catalog() {
       </h1>
 
       <div className="flex gap-3 flex-wrap mb-10">
-        {CATEGORIES.map((c) => {
+        {categories.map((c) => {
           const active = c.key === activeCategory
           return (
             <button
@@ -48,7 +47,13 @@ export default function Catalog() {
         })}
       </div>
 
-      {filteredProducts.length === 0 ? (
+      {error ? (
+        <p className="text-cp-muted-2 text-center py-16">
+          Could not load the catalog. Please try again shortly.
+        </p>
+      ) : loading ? (
+        <p className="text-cp-muted-2 text-center py-16">Loading products…</p>
+      ) : filteredProducts.length === 0 ? (
         <p className="text-cp-muted-2 text-center py-16">
           No products found in this category.
         </p>

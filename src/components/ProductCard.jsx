@@ -4,7 +4,7 @@ import PlaceholderImage from './PlaceholderImage'
 export default function ProductCard({ product, showDesc = false, imgHeight = 'h-[180px]' }) {
   return (
     <Link
-      to={`/product/${product.id}`}
+      to={`/product/${product.slug}`}
       className="flex flex-col bg-cp-surface border border-cp-border rounded-md overflow-hidden hover:border-cp-gold-dim transition-colors"
     >
       <PlaceholderImage label={product.placeholder} className={`w-full ${imgHeight}`} />

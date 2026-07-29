@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 import Button from '../components/Button'
 import ProductCard from '../components/ProductCard'
 import PlaceholderImage from '../components/PlaceholderImage'
-import { PRODUCTS } from '../data/products'
+import { useProducts } from '../context/ProductsContext'
 
 const STEPS = [
   {
@@ -49,7 +49,8 @@ const TESTIMONIALS = [
 ]
 
 export default function Home() {
-  const featuredProducts = PRODUCTS.filter((p) => p.featured)
+  const { products, loading } = useProducts()
+  const featuredProducts = products.filter((p) => p.featured)
 
   return (
     <div className="animate-cp-fade">
@@ -97,11 +98,15 @@ export default function Home() {
             View all &rarr;
           </Link>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {featuredProducts.map((p) => (
-            <ProductCard key={p.id} product={p} />
-          ))}
-        </div>
+        {loading ? (
+          <p className="text-cp-muted-2 text-center py-16">Loading products…</p>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {featuredProducts.map((p) => (
+              <ProductCard key={p.id} product={p} />
+            ))}
+          </div>
+        )}
       </div>
 
       {/* How the Custom Order Service Works */}

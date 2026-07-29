@@ -3,11 +3,12 @@ import { Link, useParams } from 'react-router-dom'
 import PlaceholderImage from '../components/PlaceholderImage'
 import Button from '../components/Button'
 import { useCart } from '../context/CartContext'
-import { getProductById } from '../data/products'
+import { useProducts } from '../context/ProductsContext'
 
 export default function Product() {
-  const { id } = useParams()
-  const product = getProductById(id)
+  const { slug } = useParams()
+  const { getProductBySlug, loading } = useProducts()
+  const product = getProductBySlug(slug)
   const { addToCart } = useCart()
   const [qty, setQty] = useState(1)
   const [justAdded, setJustAdded] = useState(false)
@@ -16,7 +17,15 @@ export default function Product() {
   useEffect(() => {
     setQty(1)
     setJustAdded(false)
-  }, [id])
+  }, [slug])
+
+  if (loading) {
+    return (
+      <div className="max-w-[1100px] mx-auto px-10 pt-12 pb-[90px] text-center animate-cp-fade">
+        <p className="text-cp-muted mb-6">Loading…</p>
+      </div>
+    )
+  }
 
   if (!product) {
     return (

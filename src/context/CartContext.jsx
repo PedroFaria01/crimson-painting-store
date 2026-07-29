@@ -1,8 +1,11 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react'
-import { PRODUCTS, formatEUR, getProductById } from '../data/products'
+import { formatEUR } from '../lib/format'
+import { useProducts } from './ProductsContext'
 
 const CartContext = createContext(null)
 const STORAGE_KEY = 'crimson-painting-cart'
+const FREE_SHIPPING_THRESHOLD = 50
+const SHIPPING_COST = 5
 
 function readInitialCart() {
   if (typeof window === 'undefined') return []
@@ -16,6 +19,7 @@ function readInitialCart() {
 }
 
 export function CartProvider({ children }) {
+  const { getProductById } = useProducts()
   const [cart, setCart] = useState(readInitialCart)
 
   useEffect(() => {
@@ -54,6 +58,9 @@ export function CartProvider({ children }) {
     setCart([])
   }
 
+  // Cart entries reference product ids only; the product catalog (fetched
+  // once via ProductsProvider) is joined in here so stale/removed products
+  // drop out of the cart automatically instead of crashing the UI.
   const cartItems = useMemo(
     () =>
       cart
@@ -63,7 +70,7 @@ export function CartProvider({ children }) {
           return { ...c, product }
         })
         .filter(Boolean),
-    [cart]
+    [cart, getProductById]
   )
 
   const cartCount = useMemo(() => cart.reduce((sum, c) => sum + c.qty, 0), [cart])
@@ -74,7 +81,7 @@ export function CartProvider({ children }) {
     [cartItems]
   )
 
-  const shipping = subtotal === 0 ? 0 : subtotal >= 50 ? 0 : 5
+  const shipping = subtotal === 0 ? 0 : subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_COST
   const total = subtotal + shipping
 
   const value = {
@@ -101,6 +108,3 @@ export function useCart() {
   if (!ctx) throw new Error('useCart must be used within a CartProvider')
   return ctx
 }
-
-// Re-exported for convenience where product lookups are needed alongside cart state
-export { PRODUCTS }
