@@ -32,8 +32,7 @@ function StorefrontLayout() {
     <div
       className="min-h-screen flex flex-col text-cp-cream font-garamond bg-cover bg-center bg-fixed"
       style={{
-        backgroundImage:
-          "linear-gradient(oklch(0.14 0.02 30 / 0.88), oklch(0.14 0.02 30 / 0.88)), url('/bg-stone.jpg')",
+        backgroundImage: `linear-gradient(oklch(0.14 0.02 30 / 0.88), oklch(0.14 0.02 30 / 0.88)), url('${import.meta.env.BASE_URL}bg-stone.jpg')`,
       }}
     >
       <Navbar />

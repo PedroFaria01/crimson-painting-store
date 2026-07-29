@@ -10,7 +10,7 @@ export default function Navbar() {
     <nav className="sticky top-0 z-50 flex items-center justify-between gap-6 px-10 py-3.5 bg-cp-bg-nav backdrop-blur-[10px] border-b border-cp-border">
       <Link to="/" className="flex items-center gap-3.5 cursor-pointer">
         <img
-          src="/crimson-logo.png"
+          src={`${import.meta.env.BASE_URL}crimson-logo.png`}
           alt="Crimson Painting"
           className="w-[52px] h-[52px] object-contain"
         />
